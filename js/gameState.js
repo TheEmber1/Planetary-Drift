@@ -52,7 +52,9 @@ export class GameState {
         if (!this.currentLevelSeed) {
             this.currentLevelSeed = Math.random();
         }
-        // Don't generate orbs until planet is placed, but initialize preview array
+        // Generate initial orbs so players can see where they are before placing planet
+        this.generateInitialOrbs();
+        // Initialize preview array for planet placement feedback
         this.previewOrbs = [];
     }
     

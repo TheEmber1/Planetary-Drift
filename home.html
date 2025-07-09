@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planetary Drift - Home</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="stars-background"></div>
+    
+    <div class="container">
+        <header class="game-title">
+            <h1>Planetary Drift</h1>
+            <p class="subtitle">Navigate the cosmic void with gravitational precision</p>
+        </header>
+
+        <main class="menu-container">
+            <section class="level-selection">
+                <h2>Select Difficulty</h2>
+                <div class="difficulty-grid">
+                    <div class="difficulty-card easy" onclick="startGame('easy')">
+                        <div class="difficulty-icon">🟢</div>
+                        <h3>Easy</h3>
+                        <p class="bounce-count">6 Bounces</p>
+                        <p class="description">Perfect for learning the ropes</p>
+                    </div>
+                    
+                    <div class="difficulty-card normal" onclick="startGame('normal')">
+                        <div class="difficulty-icon">🟡</div>
+                        <h3>Normal</h3>
+                        <p class="bounce-count">4 Bounces</p>
+                        <p class="description">Balanced challenge</p>
+                    </div>
+                    
+                    <div class="difficulty-card hard" onclick="startGame('hard')">
+                        <div class="difficulty-icon">🔴</div>
+                        <h3>Hard</h3>
+                        <p class="bounce-count">2 Bounces</p>
+                        <p class="description">For space navigation experts</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="game-info">
+                <button class="info-button" onclick="toggleInfo()">
+                    <span class="info-icon">ℹ️</span>
+                    How to Play
+                </button>
+            </section>
+        </main>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Play Planetary Drift</h2>
+                <button class="close-button" onclick="toggleInfo()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Place the Planet</h3>
+                        <p>First, click anywhere to strategically position the planet on each level. This will serve as your gravitational anchor.</p>
+                    </div>
+                </div>
+                
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Launch Your Spaceship</h3>
+                        <p>Click anywhere to spawn your spaceship, then drag to aim and release to launch. The longer you drag, the more power you'll get.</p>
+                    </div>
+                </div>
+                
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Collect Orbs</h3>
+                        <p>Navigate through space to collect the glowing orbs. Use the planet's gravity to help slingshot your spaceship around obstacles.</p>
+                    </div>
+                </div>
+                
+                <div class="instruction-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Mind Your Bounces</h3>
+                        <p>You have a limited number of bounces off the planet. Don't exceed your limit or the game will end!</p>
+                    </div>
+                </div>
+                
+                <div class="controls-section">
+                    <h3>Controls</h3>
+                    <ul>
+                        <li><strong>Left Click:</strong> Place planet, spawn spaceship, aim and launch</li>
+                        <li><strong>Right Click:</strong> Cancel aim and reposition spaceship</li>
+                        <li><strong>ESC:</strong> Restart current level</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startGame(difficulty) {
+            // Store the selected difficulty in localStorage
+            localStorage.setItem('gamedifficulty', difficulty);
+            
+            // Redirect to the main game
+            window.location.href = 'index.html';
+        }
+
+        function toggleInfo() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Close modal when clicking outside of it
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.getElementById('infoModal').classList.add('hidden');
+            }
+        });
+
+        // Animated stars background
+        function createStars() {
+            const starsContainer = document.querySelector('.stars-background');
+            const numStars = 150;
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Initialize stars when page loads
+        document.addEventListener('DOMContentLoaded', createStars);
+    </script>
+</body>
+</html>

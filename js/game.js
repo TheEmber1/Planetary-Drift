@@ -43,10 +43,10 @@ export class Game {
         window.addEventListener('resize', () => this.handleResize());
         
         // Global functions for UI buttons
-        window.startGame = () => this.startGame();
         window.restartGame = () => this.restartGame();
         window.restartCurrentLevel = () => this.restartCurrentLevel();
         window.nextLevel = () => this.nextLevel();
+        window.goHome = () => this.goHome();
     }
     
     // Handle mouse down
@@ -151,12 +151,6 @@ export class Game {
         this.gameState.generateStars(this.canvas.width, this.canvas.height);
     }
     
-    // Start game
-    startGame() {
-        this.gameState.startGame();
-        document.getElementById('instructions').classList.add('hidden');
-    }
-    
     // Restart game
     restartGame() {
         this.gameState.restartGame(this.canvas.width, this.canvas.height);
@@ -176,6 +170,11 @@ export class Game {
         this.gameState.nextLevel(this.canvas.width, this.canvas.height);
         document.getElementById('levelComplete').classList.add('hidden');
         this.updateUI();
+    }
+    
+    // Go to home screen
+    goHome() {
+        window.location.href = 'home.html';
     }
     
     // Update game state

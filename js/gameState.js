@@ -3,9 +3,14 @@ import { CONFIG, getDistance, randomBetween } from './config.js';
 // Game state management
 export class GameState {
     constructor() {
-        this.state = 'menu'; // 'menu', 'placing', 'playing', 'gameOver', 'levelComplete'
+        this.state = 'placing'; // 'menu', 'placing', 'playing', 'gameOver', 'levelComplete'
         this.currentLevel = 1;
-        this.bouncesLeft = CONFIG.MAX_BOUNCES;
+        
+        // Check for difficulty setting from localStorage
+        this.difficulty = localStorage.getItem('gamedifficulty') || 'normal';
+        this.maxBounces = CONFIG.DIFFICULTY[this.difficulty]?.bounces || CONFIG.MAX_BOUNCES;
+        this.bouncesLeft = this.maxBounces;
+        
         this.hasLaunched = false;
         this.lastBounceTime = 0;
         this.spaceshipVisible = false;
@@ -222,7 +227,7 @@ export class GameState {
     // Restart game
     restartGame(canvasWidth, canvasHeight) {
         this.currentLevel = 1;
-        this.bouncesLeft = CONFIG.MAX_BOUNCES;
+        this.bouncesLeft = this.maxBounces;
         this.spaceship.x = 150;
         this.spaceship.y = 150;
         this.spaceship.velocity = { x: 0, y: 0 };
@@ -241,7 +246,7 @@ export class GameState {
     
     // Restart current level with same orb layout
     restartCurrentLevel(canvasWidth, canvasHeight) {
-        this.bouncesLeft = CONFIG.MAX_BOUNCES;
+        this.bouncesLeft = this.maxBounces;
         this.spaceship.x = 150;
         this.spaceship.y = 150;
         this.spaceship.velocity = { x: 0, y: 0 };
@@ -262,7 +267,7 @@ export class GameState {
     // Advance to next level
     nextLevel(canvasWidth, canvasHeight) {
         this.currentLevel++;
-        this.bouncesLeft = CONFIG.MAX_BOUNCES;
+        this.bouncesLeft = this.maxBounces;
         this.spaceship.x = 150;
         this.spaceship.y = 150;
         this.spaceship.velocity = { x: 0, y: 0 };

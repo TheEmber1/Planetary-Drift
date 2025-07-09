@@ -15,25 +15,19 @@
             <div id="level">Level: <span id="levelNum">1</span></div>
             <div id="bounces">Bounces: <span id="bouncesLeft">5</span></div>
             <div id="orbs">Orbs: <span id="orbsLeft">1</span></div>
+            <button id="homeButton" onclick="goHome()">Home</button>
         </div>
         <div id="gameOver" class="hidden">
             <h2>Game Over</h2>
             <p>Final Level: <span id="finalLevel"></span></p>
             <button onclick="restartCurrentLevel()">Retry Level</button>
             <button onclick="restartGame()">Start Over</button>
+            <button onclick="goHome()">Home</button>
         </div>
         <div id="levelComplete" class="hidden">
             <h2>Level Complete</h2>
             <button onclick="nextLevel()">Next Level</button>
-        </div>
-        <div id="instructions">
-            <h3>Planetary Drift</h3>
-            <p>First, click to place the planet strategically on each level.</p>
-            <p>Then click anywhere to spawn your spaceship, drag to aim and release to launch.</p>
-            <p>Right-click while aiming to cancel and reposition your spaceship.</p>
-            <p>Press ESC to restart the current level.</p>
-            <p>Collect orbs to advance. Don't bounce off the planet more than 5 times!</p>
-            <button onclick="startGame()">Start Game</button>
+            <button onclick="goHome()">Home</button>
         </div>
     </div>
     <script type="module" src="js/main.js"></script>

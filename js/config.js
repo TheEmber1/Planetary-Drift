@@ -53,8 +53,15 @@ export const CONFIG = {
     STAR_MAX_OPACITY: 1.0,
     
     // Game Rules
-    MAX_BOUNCES: 5, // Increased from 3 for more forgiving gameplay
-    ORBS_PER_LEVEL_MULTIPLIER: 1
+    MAX_BOUNCES: 5, // Default (will be overridden by difficulty)
+    ORBS_PER_LEVEL_MULTIPLIER: 1,
+    
+    // Difficulty Settings
+    DIFFICULTY: {
+        easy: { bounces: 6 },
+        normal: { bounces: 4 },
+        hard: { bounces: 2 }
+    }
 };
 
 // Utility functions

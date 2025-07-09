@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planetary Drift</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div id="level">Level: <span id="levelNum">1</span></div>
+            <div id="bounces">Bounces: <span id="bouncesLeft">5</span></div>
+            <div id="orbs">Orbs: <span id="orbsLeft">1</span></div>
+        </div>
+        <div id="gameOver" class="hidden">
+            <h2>Game Over</h2>
+            <p>Final Level: <span id="finalLevel"></span></p>
+            <button onclick="restartCurrentLevel()">Retry Level</button>
+            <button onclick="restartGame()">Start Over</button>
+        </div>
+        <div id="levelComplete" class="hidden">
+            <h2>Level Complete</h2>
+            <button onclick="nextLevel()">Next Level</button>
+        </div>
+        <div id="instructions">
+            <h3>Planetary Drift</h3>
+            <p>First, click to place the planet strategically on each level.</p>
+            <p>Then click anywhere to spawn your spaceship, drag to aim and release to launch.</p>
+            <p>Right-click while aiming to cancel and reposition your spaceship.</p>
+            <p>Press ESC to restart the current level.</p>
+            <p>Collect orbs to advance. Don't bounce off the planet more than 5 times!</p>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

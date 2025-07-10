@@ -55,6 +55,7 @@ export const CONFIG = {
     // Game Rules
     MAX_BOUNCES: 5, // Default (will be overridden by difficulty)
     ORBS_PER_LEVEL_MULTIPLIER: 1,
+    MAX_LEVEL: 15, // Maximum level in the game
     
     // Difficulty Settings
     DIFFICULTY: {

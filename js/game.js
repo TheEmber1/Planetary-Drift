@@ -168,13 +168,153 @@ export class Game {
     // Next level
     nextLevel() {
         this.gameState.nextLevel(this.canvas.width, this.canvas.height);
-        document.getElementById('levelComplete').classList.add('hidden');
+        document.getElementById('levelProgression').classList.add('hidden');
         this.updateUI();
     }
     
     // Go to home screen
     goHome() {
         window.location.href = 'home.html';
+    }
+    
+    // Show level progression animation
+    showLevelProgression() {
+        const currentLevel = this.gameState.currentLevel;
+        const nextLevel = currentLevel + 1;
+        const maxLevel = CONFIG.MAX_LEVEL;
+        
+        // Update the progression text
+        document.getElementById('nextLevelText').textContent = currentLevel;
+        
+        // Create level dots
+        this.createLevelDots(currentLevel, maxLevel);
+        
+        // Show the progression animation
+        document.getElementById('levelProgression').classList.remove('hidden');
+        
+        // Animate the progress line and current level completion
+        setTimeout(() => {
+            this.animateProgressLine(currentLevel, maxLevel);
+        }, 500);
+        
+        // The buttons are now part of the progression display, no need to hide it
+    }
+    
+    // Create level dots for the progress bar
+    createLevelDots(currentLevel, maxLevel) {
+        const dotsContainer = document.getElementById('levelDots');
+        dotsContainer.innerHTML = '';
+        
+        // Calculate which levels to show (show at least 6 dots)
+        const minDotsToShow = 6;
+        let startLevel, endLevel;
+        
+        if (currentLevel <= 3) {
+            startLevel = 1;
+            endLevel = Math.min(maxLevel, minDotsToShow);
+        } else if (currentLevel >= maxLevel - 2) {
+            startLevel = Math.max(1, maxLevel - minDotsToShow + 1);
+            endLevel = maxLevel;
+        } else {
+            startLevel = currentLevel - 2;
+            endLevel = Math.min(maxLevel, currentLevel + 3);
+        }
+        
+        // Create dots
+        for (let i = startLevel; i <= endLevel; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'level-dot';
+            dot.textContent = i;
+            dot.id = `level-dot-${i}`;
+            
+            if (i < currentLevel) {
+                dot.classList.add('completed');
+            } else if (i === currentLevel) {
+                dot.classList.add('current');
+            }
+            
+            dotsContainer.appendChild(dot);
+        }
+    }
+    
+    // Animate the progress line
+    animateProgressLine(currentLevel, maxLevel) {
+        const progressLine = document.getElementById('progressLine');
+        const progressBackground = document.querySelector('.progress-line-background');
+        const dotsContainer = document.getElementById('levelDots');
+        const currentDot = document.getElementById(`level-dot-${currentLevel}`);
+        const dots = dotsContainer.querySelectorAll('.level-dot');
+        
+        if (dots.length <= 1) return; // Need at least 2 dots for a line
+        
+        // Wait for DOM to be ready, then position the lines
+        setTimeout(() => {
+            const firstDot = dots[0];
+            const lastDot = dots[dots.length - 1];
+            const progressBar = document.querySelector('.level-progress-bar');
+            
+            // Get positions relative to the progress bar container
+            const progressBarRect = progressBar.getBoundingClientRect();
+            const firstDotRect = firstDot.getBoundingClientRect();
+            const lastDotRect = lastDot.getBoundingClientRect();
+            
+            // Calculate positions relative to the progress bar
+            const firstDotCenter = firstDotRect.left + firstDotRect.width / 2 - progressBarRect.left;
+            const lastDotCenter = lastDotRect.left + lastDotRect.width / 2 - progressBarRect.left;
+            const lineWidth = lastDotCenter - firstDotCenter;
+            
+            // Position the gray background line from first dot center to last dot center
+            progressBackground.style.left = firstDotCenter + 'px';
+            progressBackground.style.width = lineWidth + 'px';
+            
+            // Always position the colored line to start from the first dot center
+            progressLine.style.left = firstDotCenter + 'px';
+            
+            // Find all completed dots up to (but not including) the current level
+            const completedDots = Array.from(dots).filter(dot => 
+                parseInt(dot.textContent) < currentLevel
+            );
+            
+            if (completedDots.length > 0) {
+                // Calculate width to the last completed dot
+                const lastCompletedDot = completedDots[completedDots.length - 1];
+                const lastCompletedRect = lastCompletedDot.getBoundingClientRect();
+                const lastCompletedCenter = lastCompletedRect.left + lastCompletedRect.width / 2 - progressBarRect.left;
+                const existingWidth = lastCompletedCenter - firstDotCenter;
+                
+                progressLine.style.width = Math.max(0, existingWidth) + 'px';
+            } else {
+                // No previous completed levels, but make sure the line is visible with minimum width
+                progressLine.style.width = '0px';
+            }
+            
+            // Force a repaint to ensure the line is visible
+            progressLine.style.display = 'block';
+        }, 100);
+        
+        // First, animate the progress line to the current level
+        setTimeout(() => {
+            if (currentDot) {
+                const progressBar = document.querySelector('.level-progress-bar');
+                const progressBarRect = progressBar.getBoundingClientRect();
+                const currentDotRect = currentDot.getBoundingClientRect();
+                const firstDotRect = dots[0].getBoundingClientRect();
+                
+                const firstDotCenter = firstDotRect.left + firstDotRect.width / 2 - progressBarRect.left;
+                const currentDotCenter = currentDotRect.left + currentDotRect.width / 2 - progressBarRect.left;
+                const newWidth = Math.max(0, currentDotCenter - firstDotCenter);
+                
+                progressLine.style.width = newWidth + 'px';
+            }
+        }, 500);
+        
+        // Then animate the current level dot completion
+        setTimeout(() => {
+            if (currentDot) {
+                currentDot.classList.remove('current');
+                currentDot.classList.add('completed', 'animate-complete');
+            }
+        }, 1800);
     }
     
     // Update game state
@@ -219,7 +359,7 @@ export class Game {
             // Check win/lose conditions
             if (this.gameState.isLevelComplete()) {
                 this.gameState.state = 'levelComplete';
-                document.getElementById('levelComplete').classList.remove('hidden');
+                this.showLevelProgression();
             } else if (this.gameState.isGameOver()) {
                 this.gameState.state = 'gameOver';
                 document.getElementById('finalLevel').textContent = this.gameState.currentLevel;

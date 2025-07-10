@@ -24,10 +24,24 @@
             <button onclick="restartGame()">Start Over</button>
             <button onclick="goHome()">Home</button>
         </div>
-        <div id="levelComplete" class="hidden">
-            <h2>Level Complete</h2>
-            <button onclick="nextLevel()">Next Level</button>
-            <button onclick="goHome()">Home</button>
+        <div id="levelProgression" class="hidden">
+            <div class="progression-content">
+                <div class="level-progress-bar">
+                    <div class="progress-line-background"></div>
+                    <div class="progress-line" id="progressLine"></div>
+                    <div class="level-dots" id="levelDots">
+                        <!-- Level dots will be generated dynamically -->
+                    </div>
+                </div>
+                <div class="progression-text">
+                    <h2>Level <span id="nextLevelText">2</span> Complete!</h2>
+                    <p>Great job! Moving to the next challenge...</p>
+                </div>
+                <div class="progression-buttons">
+                    <button onclick="nextLevel()">Next Level</button>
+                    <button onclick="goHome()">Home</button>
+                </div>
+            </div>
         </div>
     </div>
     <script type="module" src="js/main.js"></script>

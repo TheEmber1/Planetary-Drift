@@ -62,7 +62,20 @@ export const CONFIG = {
         easy: { bounces: 6 },
         normal: { bounces: 4 },
         hard: { bounces: 2 }
-    }
+    },
+    
+    // Power-ups
+    POWERUP_RADIUS: 20,
+    POWERUP_GLOW: 15,
+    POWERUP_SPAWN_CHANCE: 0.3, // 30% chance to spawn a power-up in a level
+    POWERUP_MIN_DISTANCE_FROM_PLANET: 100,
+    POWERUP_MIN_DISTANCE_FROM_ORBS: 50,
+    
+    // Power-up effects
+    MAGNET_RANGE: 250,
+    MAGNET_STRENGTH: 4.0,
+    SPLIT_SHOT_COUNT: 3,
+    SPLIT_SHOT_ANGLE: 30, // degrees
 };
 
 // Utility functions

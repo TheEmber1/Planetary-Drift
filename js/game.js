@@ -2,6 +2,7 @@ import { CONFIG, getDistance } from './config.js';
 import { Physics } from './physics.js';
 import { Renderer } from './renderer.js';
 import { GameState } from './gameState.js';
+import { powerupSystem, POWERUP_TYPES } from './powerups.js';
 
 // Main game class
 export class Game {
@@ -26,6 +27,9 @@ export class Game {
         // Start game loop
         this.updateUI();
         this.gameLoop();
+        
+        // Show power-up selection for the first level
+        powerupSystem.showPowerupSelection();
     }
     
     // Bind event handlers
@@ -153,22 +157,58 @@ export class Game {
     
     // Restart game
     restartGame() {
+        // Clear any active power-up
+        powerupSystem.clearActivePowerup();
+        powerupSystem.clearLevelPowerup(); // Clear level power-up when restarting completely
+        
         this.gameState.restartGame(this.canvas.width, this.canvas.height);
         document.getElementById('gameOver').classList.add('hidden');
+        
+        // Show power-up selection for first level
+        powerupSystem.showPowerupSelection();
+        
         this.updateUI();
     }
     
     // Restart current level (when losing or pressing ESC)
     restartCurrentLevel() {
+        // Clear any active power-up
+        powerupSystem.clearActivePowerup();
+        
+        // Restore the power-up that was used for this level
+        powerupSystem.restoreLevelPowerup();
+        
         this.gameState.restartCurrentLevel(this.canvas.width, this.canvas.height);
         document.getElementById('gameOver').classList.add('hidden');
+        
+        // Show power-up selection for current level
+        powerupSystem.showPowerupSelection();
+        
         this.updateUI();
     }
     
     // Next level
     nextLevel() {
+        // Clear any active power-up from previous level
+        powerupSystem.clearActivePowerup();
+        powerupSystem.clearLevelPowerup(); // Clear level power-up when advancing
+        
         this.gameState.nextLevel(this.canvas.width, this.canvas.height);
         document.getElementById('levelProgression').classList.add('hidden');
+        
+        // Show power-up selection if player has any
+        powerupSystem.showPowerupSelection();
+        
+        this.updateUI();
+    }
+    
+    // Start level (called after power-up selection)
+    startLevel() {
+        // Don't activate power-up yet - save the selection for when planet is placed
+        // Power-up will be activated when planet is placed and gameplay begins
+        
+        // Level is ready to play - orbs and power-ups will be spawned when planet is placed
+        this.gameState.state = 'placing';
         this.updateUI();
     }
     
@@ -320,41 +360,64 @@ export class Game {
     // Update game state
     update(deltaTime) {
         if (this.gameState.state !== 'playing') return;
-        
-        const spaceship = this.gameState.spaceship;
+
         const planet = this.gameState.planet;
         
         if (this.gameState.hasLaunched) {
-            // Apply physics
-            Physics.applyGravity(spaceship, planet, deltaTime);
-            
-            // Update position
-            spaceship.x += spaceship.velocity.x * deltaTime * 60;
-            spaceship.y += spaceship.velocity.y * deltaTime * 60;
-            
-            // Handle wall bounces
-            Physics.handleWallBounces(spaceship, this.canvas.width, this.canvas.height);
-            
-            // Handle planet collision
+            // Handle multiple projectiles (for split shot) or single projectile
+            let anyProjectileBounced = false;
             const currentTime = Date.now();
-            if (currentTime - this.gameState.lastBounceTime > CONFIG.BOUNCE_COOLDOWN) {
-                if (Physics.handlePlanetBounce(spaceship, planet)) {
-                    this.gameState.lastBounceTime = currentTime;
-                    this.gameState.reduceBounces();
-                    this.updateUI();
+            
+            this.gameState.projectiles.forEach(projectile => {
+                // Apply physics
+                Physics.applyGravity(projectile, planet, deltaTime);
+                
+                // Update position
+                projectile.x += projectile.velocity.x * deltaTime * 60;
+                projectile.y += projectile.velocity.y * deltaTime * 60;
+                
+                // Handle wall bounces
+                Physics.handleWallBounces(projectile, this.canvas.width, this.canvas.height);
+                
+                // Handle planet collision - any projectile can trigger bounce count
+                if (currentTime - this.gameState.lastBounceTime > CONFIG.BOUNCE_COOLDOWN) {
+                    if (Physics.handlePlanetBounce(projectile, planet)) {
+                        anyProjectileBounced = true;
+                    }
                 }
+                
+                // Update trail
+                projectile.trail.push({ x: projectile.x, y: projectile.y });
+                if (projectile.trail.length > CONFIG.TRAIL_LENGTH) {
+                    projectile.trail.shift();
+                }
+            });
+            
+            // Update bounce count only once per frame if any projectile bounced
+            if (anyProjectileBounced) {
+                this.gameState.lastBounceTime = currentTime;
+                this.gameState.reduceBounces();
+                this.updateUI();
             }
             
-            // Check orb collection
+            // Apply magnet effect if active
+            if (powerupSystem.isPowerupActive('magnet')) {
+                this.applyMagnetEffect();
+            }
+            
+            // Check orb collection for all projectiles
             for (let i = this.gameState.orbs.length - 1; i >= 0; i--) {
-                if (Physics.checkCollision(spaceship, this.gameState.orbs[i])) {
-                    this.gameState.removeOrb(i);
-                    this.updateUI();
+                for (const projectile of this.gameState.projectiles) {
+                    if (Physics.checkCollision(projectile, this.gameState.orbs[i])) {
+                        this.gameState.removeOrb(i);
+                        this.updateUI();
+                        break; // Exit projectile loop since orb is collected
+                    }
                 }
             }
             
-            // Update trail
-            this.gameState.updateSpaceshipTrail();
+            // Check power-up collection for all projectiles
+            this.checkPowerupCollection();
             
             // Check win/lose conditions
             if (this.gameState.isLevelComplete()) {
@@ -364,6 +427,56 @@ export class Game {
                 this.gameState.state = 'gameOver';
                 document.getElementById('finalLevel').textContent = this.gameState.currentLevel;
                 document.getElementById('gameOver').classList.remove('hidden');
+            }
+        }
+    }
+    
+    // Apply magnet effect to pull orbs toward projectiles
+    applyMagnetEffect() {
+        const magnetRange = CONFIG.MAGNET_RANGE;
+        const magnetStrength = CONFIG.MAGNET_STRENGTH;
+        
+        this.gameState.orbs.forEach(orb => {
+            this.gameState.projectiles.forEach(projectile => {
+                const distance = getDistance(orb, projectile);
+                if (distance < magnetRange && distance > 0) {
+                    // Calculate pull force (stronger when closer)
+                    const pullForce = magnetStrength * (magnetRange - distance) / magnetRange;
+                    
+                    // Calculate direction from orb to projectile
+                    const angle = Math.atan2(projectile.y - orb.y, projectile.x - orb.x);
+                    
+                    // Apply force to orb position
+                    orb.x += Math.cos(angle) * pullForce;
+                    orb.y += Math.sin(angle) * pullForce;
+                    
+                    // Keep orbs within canvas bounds
+                    orb.x = Math.max(orb.radius, Math.min(this.canvas.width - orb.radius, orb.x));
+                    orb.y = Math.max(orb.radius, Math.min(this.canvas.height - orb.radius, orb.y));
+                }
+            });
+        });
+    }
+    
+    // Check power-up collection
+    checkPowerupCollection() {
+        for (let i = this.gameState.powerups.length - 1; i >= 0; i--) {
+            const powerup = this.gameState.powerups[i];
+            if (!powerup.collected) {
+                // Check collision with any projectile
+                for (const projectile of this.gameState.projectiles) {
+                    const distance = getDistance(projectile, powerup);
+                    if (distance < projectile.radius + powerup.radius) {
+                        // Collect the power-up
+                        powerup.collected = true;
+                        powerupSystem.addPowerup(powerup.type);
+                        this.gameState.powerups.splice(i, 1);
+                        
+                        // Add collection effect here if desired
+                        console.log(`Collected power-up: ${powerup.type}`);
+                        break; // Exit projectile loop since power-up is collected
+                    }
+                }
             }
         }
     }
@@ -420,6 +533,15 @@ export class Game {
             // Draw orbs normally during gameplay
             this.renderer.drawOrbs(this.gameState.orbs, time);
             
+            // Draw power-ups
+            this.renderer.drawPowerups(this.gameState.powerups, time);
+            
+            // Draw power-ups
+            this.renderer.drawPowerups(this.gameState.powerups, time);
+            
+            // Draw power-ups
+            this.renderer.drawPowerups(this.gameState.powerups, time);
+            
             // Show repositioning instructions if allowed
             if (this.gameState.allowPlanetRepositioning && !this.gameState.hasLaunched && this.gameState.planet) {
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
@@ -430,7 +552,13 @@ export class Game {
         }
         
         // Draw game objects
-        if (this.gameState.spaceshipVisible) {
+        if (this.gameState.hasLaunched) {
+            // Draw all projectiles
+            this.gameState.projectiles.forEach(projectile => {
+                this.renderer.drawSpaceship(projectile, time);
+            });
+        } else if (this.gameState.spaceshipVisible) {
+            // Draw spaceship for aiming
             this.renderer.drawSpaceship(this.gameState.spaceship, time);
         }
         
@@ -452,16 +580,61 @@ export class Game {
                 const velocityX = (-dx / distance) * maxPower;
                 const velocityY = (-dy / distance) * maxPower;
                 
-                const trajectory = Physics.predictTrajectory(
-                    this.gameState.spaceship.x, this.gameState.spaceship.y,
-                    velocityX, velocityY,
-                    this.gameState.planet,
-                    this.canvas.width, this.canvas.height
-                );
+                // Check if split shot is active
+                const isSplitShot = powerupSystem.isPowerupActive('split_shot');
                 
-                this.renderer.drawTrajectory(trajectory);
+                if (isSplitShot) {
+                    // Calculate 3 trajectories with spread
+                    const trajectories = this.calculateSplitShotTrajectories(
+                        this.gameState.spaceship.x, this.gameState.spaceship.y,
+                        velocityX, velocityY
+                    );
+                    this.renderer.drawTrajectory(trajectories, true);
+                } else {
+                    // Single trajectory
+                    const trajectory = Physics.predictTrajectory(
+                        this.gameState.spaceship.x, this.gameState.spaceship.y,
+                        velocityX, velocityY,
+                        this.gameState.planet,
+                        this.canvas.width, this.canvas.height
+                    );
+                    this.renderer.drawTrajectory(trajectory);
+                }
             }
         }
+    }
+    
+    // Calculate multiple trajectories for split shot
+    calculateSplitShotTrajectories(startX, startY, velocityX, velocityY) {
+        const trajectories = [];
+        const spreadAngle = CONFIG.SPLIT_SHOT_ANGLE * Math.PI / 180; // Convert to radians
+        
+        // Calculate the base angle of the velocity vector
+        const baseAngle = Math.atan2(velocityY, velocityX);
+        
+        // Calculate 3 trajectories: left, center, right
+        const angles = [
+            baseAngle - spreadAngle,  // Left
+            baseAngle,                // Center
+            baseAngle + spreadAngle   // Right
+        ];
+        
+        const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+        
+        angles.forEach(angle => {
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            
+            const trajectory = Physics.predictTrajectory(
+                startX, startY, vx, vy,
+                this.gameState.planet,
+                this.canvas.width, this.canvas.height
+            );
+            
+            trajectories.push(trajectory);
+        });
+        
+        return trajectories;
     }
     
     // Update UI

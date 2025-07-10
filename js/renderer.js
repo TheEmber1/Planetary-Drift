@@ -247,27 +247,47 @@ export class Renderer {
         this.ctx.closePath();
     }
     
-    // Draw trajectory prediction
-    drawTrajectory(trajectory) {
-        if (trajectory.length < 2) return;
+    // Draw trajectory prediction - can handle multiple trajectories for split shot
+    drawTrajectory(trajectories, isSplitShot = false) {
+        if (!trajectories || trajectories.length === 0) return;
         
-        this.ctx.strokeStyle = CONFIG.TRAJECTORY_COLOR;
-        this.ctx.lineWidth = CONFIG.TRAJECTORY_WIDTH;
-        this.ctx.setLineDash([CONFIG.TRAJECTORY_DASH_LENGTH, CONFIG.TRAJECTORY_GAP_LENGTH]);
+        // If it's not split shot, convert single trajectory to array format
+        const trajectoryArray = isSplitShot ? trajectories : [trajectories];
         
-        this.ctx.beginPath();
-        for (let i = 0; i < trajectory.length; i++) {
-            const point = trajectory[i];
-            const alpha = 1 - (i / trajectory.length) * 0.7; // Fade effect
-            this.ctx.globalAlpha = alpha;
+        trajectoryArray.forEach((trajectory, shotIndex) => {
+            if (trajectory.length < 2) return;
             
-            if (i === 0) {
-                this.ctx.moveTo(point.x, point.y);
+            // Use different colors/styles for split shot
+            if (isSplitShot) {
+                const colors = [
+                    'rgba(255, 159, 243, 0.7)', // Left shot
+                    'rgba(255, 107, 157, 0.8)', // Center shot (main color)
+                    'rgba(196, 69, 105, 0.7)'   // Right shot
+                ];
+                this.ctx.strokeStyle = colors[shotIndex] || colors[0];
+                this.ctx.lineWidth = shotIndex === 1 ? 3 : 2; // Center shot slightly thicker
             } else {
-                this.ctx.lineTo(point.x, point.y);
+                this.ctx.strokeStyle = CONFIG.TRAJECTORY_COLOR;
+                this.ctx.lineWidth = CONFIG.TRAJECTORY_WIDTH;
             }
-        }
-        this.ctx.stroke();
+            
+            this.ctx.setLineDash([CONFIG.TRAJECTORY_DASH_LENGTH, CONFIG.TRAJECTORY_GAP_LENGTH]);
+            
+            this.ctx.beginPath();
+            for (let i = 0; i < trajectory.length; i++) {
+                const point = trajectory[i];
+                const alpha = 1 - (i / trajectory.length) * 0.7; // Fade effect
+                this.ctx.globalAlpha = alpha;
+                
+                if (i === 0) {
+                    this.ctx.moveTo(point.x, point.y);
+                } else {
+                    this.ctx.lineTo(point.x, point.y);
+                }
+            }
+            this.ctx.stroke();
+        });
+        
         this.ctx.globalAlpha = 1.0;
         this.ctx.setLineDash([]);
     }
@@ -418,5 +438,46 @@ export class Renderer {
         this.ctx.arc(planet.x, planet.y, planet.radius + 8, 0, Math.PI * 2);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
+    }
+    
+    // Draw power-ups
+    drawPowerups(powerups, time) {
+        powerups.forEach(powerup => {
+            if (powerup.collected) return;
+            
+            // Update glow animation
+            powerup.glowPhase += 0.05;
+            const glowIntensity = Math.sin(powerup.glowPhase) * 0.3 + 0.7;
+            
+            // Draw glow effect
+            const gradient = this.ctx.createRadialGradient(
+                powerup.x, powerup.y, powerup.radius * 0.5,
+                powerup.x, powerup.y, powerup.radius + CONFIG.POWERUP_GLOW
+            );
+            gradient.addColorStop(0, powerup.color);
+            gradient.addColorStop(1, 'transparent');
+            
+            this.ctx.globalAlpha = glowIntensity;
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(powerup.x, powerup.y, powerup.radius + CONFIG.POWERUP_GLOW, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Draw power-up body
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.fillStyle = powerup.color;
+            this.ctx.beginPath();
+            this.ctx.arc(powerup.x, powerup.y, powerup.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Draw power-up icon
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = `${powerup.radius}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(powerup.icon, powerup.x, powerup.y);
+        });
+        
+        this.ctx.globalAlpha = 1.0;
     }
 }

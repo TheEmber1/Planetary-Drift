@@ -1,4 +1,5 @@
 import { CONFIG, getDistance, randomBetween } from './config.js';
+import { powerupSystem } from './powerups.js';
 
 // Game state management
 export class GameState {
@@ -24,9 +25,11 @@ export class GameState {
         // Game objects
         this.planet = null;
         this.spaceship = null;
+        this.projectiles = []; // Array to handle multiple projectiles (for split shot)
         this.orbs = [];
         this.previewOrbs = []; // Orbs shown during planet placement
         this.stars = [];
+        this.powerups = []; // Power-ups in current level
         this.currentLevelSeed = null; // Store seed for level restart
         this.pendingPlanet = null; // Planet position while placing
     }
@@ -284,6 +287,7 @@ export class GameState {
         this.allowPlanetRepositioning = true;
         this.state = 'placing';
         this.generateInitialOrbs();
+        this.powerups = []; // Initialize power-ups array
     }
     
     // Update planet position (for window resize)
@@ -303,13 +307,66 @@ export class GameState {
         this.bouncesLeft--;
     }
     
-    // Launch spaceship
+    // Launch spaceship (or multiple projectiles for split shot)
     launchSpaceship(velocityX, velocityY) {
-        this.spaceship.velocity.x = velocityX;
-        this.spaceship.velocity.y = velocityY;
+        // Check if split shot is active
+        if (powerupSystem.isPowerupActive('split_shot')) {
+            // Create 3 projectiles for split shot
+            this.createSplitShotProjectiles(velocityX, velocityY);
+        } else {
+            // Single projectile (normal shot)
+            this.spaceship.velocity.x = velocityX;
+            this.spaceship.velocity.y = velocityY;
+            this.projectiles = [this.spaceship]; // Track as single projectile
+        }
+        
         this.hasLaunched = true;
         this.isMouseDown = false;
         this.allowPlanetRepositioning = false; // Disable planet repositioning after first launch
+    }
+    
+    // Create multiple projectiles for split shot
+    createSplitShotProjectiles(velocityX, velocityY) {
+        const spreadAngle = CONFIG.SPLIT_SHOT_ANGLE * Math.PI / 180; // Convert degrees to radians
+        const baseAngle = Math.atan2(velocityY, velocityX);
+        const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+        
+        // Clear existing projectiles
+        this.projectiles = [];
+        
+        // Create 3 projectiles: left, center, right
+        const angles = [
+            baseAngle - spreadAngle,  // Left
+            baseAngle,                // Center  
+            baseAngle + spreadAngle   // Right
+        ];
+        
+        angles.forEach((angle, index) => {
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            
+            // Create projectile object with matching colors
+            const colors = [
+                '#ff9ff3', // Left shot (matches trajectory)
+                CONFIG.SPACESHIP_COLOR, // Center shot (main color)
+                '#c44569'  // Right shot (matches trajectory)
+            ];
+            
+            const projectile = {
+                x: this.spaceship.x,
+                y: this.spaceship.y,
+                radius: CONFIG.SPACESHIP_RADIUS,
+                color: colors[index],
+                velocity: { x: vx, y: vy },
+                trail: [],
+                isMainProjectile: index === 1 // Only the center projectile is the "main" one
+            };
+            
+            this.projectiles.push(projectile);
+        });
+        
+        // Update spaceship position to be invisible (projectiles are active now)
+        this.spaceship.velocity = { x: 0, y: 0 };
     }
     
     // Set spaceship position
@@ -391,6 +448,59 @@ export class GameState {
             this.planet = { ...this.pendingPlanet };
             this.planetPlaced = true;
             this.state = 'playing';
+            
+            // Activate the selected power-up now that gameplay begins
+            if (powerupSystem.selectedPowerup) {
+                powerupSystem.activateSelectedPowerup();
+            }
+            
+            // Spawn power-ups now that planet is placed
+            this.spawnPowerups(canvasWidth, canvasHeight);
+        }
+    }
+    
+    // Spawn power-ups for the current level
+    spawnPowerups(canvasWidth, canvasHeight) {
+        const powerupType = powerupSystem.generateRandomPowerup();
+        if (powerupType && this.planet) {
+            // Find a valid position for the power-up
+            let attempts = 0;
+            while (attempts < 50) {
+                const x = Math.random() * (canvasWidth - 100) + 50;
+                const y = Math.random() * (canvasHeight - 100) + 50;
+                
+                // Check distance from planet
+                const planetDistance = Math.sqrt(
+                    Math.pow(x - this.planet.x, 2) + 
+                    Math.pow(y - this.planet.y, 2)
+                );
+                if (planetDistance < 100) { // CONFIG.POWERUP_MIN_DISTANCE_FROM_PLANET
+                    attempts++;
+                    continue;
+                }
+                
+                // Check distance from orbs
+                let tooClose = false;
+                for (const orb of this.orbs) {
+                    const orbDistance = Math.sqrt(
+                        Math.pow(x - orb.x, 2) + 
+                        Math.pow(y - orb.y, 2)
+                    );
+                    if (orbDistance < 50) { // CONFIG.POWERUP_MIN_DISTANCE_FROM_ORBS
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    const powerup = powerupSystem.createPowerupObject(powerupType.id, x, y);
+                    if (powerup) {
+                        this.powerups.push(powerup);
+                    }
+                    break;
+                }
+                attempts++;
+            }
         }
     }
     

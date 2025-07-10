@@ -17,6 +17,29 @@
             <div id="orbs">Orbs: <span id="orbsLeft">1</span></div>
             <button id="homeButton" onclick="goHome()">Home</button>
         </div>
+        
+        <!-- Power-up inventory display -->
+        <div id="powerupInventory" class="powerup-inventory">
+            <h3>Power-ups</h3>
+            <div id="powerupSlots" class="powerup-slots">
+                <!-- Power-up slots will be populated dynamically -->
+            </div>
+        </div>
+        
+        <!-- Power-up selection modal -->
+        <div id="powerupSelection" class="powerup-selection-modal hidden">
+            <div class="powerup-selection-content">
+                <h2>Choose Your Power-up</h2>
+                <p>Select a power-up to use for this level:</p>
+                <div id="powerupOptions" class="powerup-options">
+                    <!-- Power-up options will be populated dynamically -->
+                </div>
+                <div class="powerup-selection-buttons">
+                    <button id="skipPowerup" onclick="skipPowerupSelection()">Skip</button>
+                    <button id="startLevel" onclick="startLevelWithPowerup()" disabled>Start Level</button>
+                </div>
+            </div>
+        </div>
         <div id="gameOver" class="hidden">
             <h2>Game Over</h2>
             <p>Final Level: <span id="finalLevel"></span></p>

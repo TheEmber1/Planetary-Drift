@@ -351,6 +351,255 @@ body {
     transform: translateY(0);
 }
 
+/* Power-up System Styles */
+.powerup-inventory {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    z-index: 10;
+    min-width: 140px;
+}
+
+.powerup-inventory h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #ff9ff3;
+    font-weight: 600;
+}
+
+.powerup-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.powerup-slot {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    position: relative;
+}
+
+.powerup-slot.has-powerup {
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    border-color: #ff6b9d;
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+}
+
+.powerup-slot .powerup-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ff9ff3;
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Power-up Selection Modal */
+.powerup-selection-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.powerup-selection-modal.hidden {
+    display: none;
+}
+
+.powerup-selection-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.powerup-selection-content h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #ff6b9d, #ff9ff3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.powerup-selection-content p {
+    color: #b0b0b0;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.powerup-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.powerup-option {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.powerup-option:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.powerup-option.selected {
+    border-color: #ff6b9d;
+    background: rgba(255, 107, 157, 0.1);
+    box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
+}
+
+.powerup-option .powerup-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.powerup-option .powerup-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.powerup-option .powerup-description {
+    font-size: 0.7rem;
+    color: #b0b0b0;
+    line-height: 1.2;
+}
+
+.powerup-option .powerup-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ff9ff3;
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.powerup-selection-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.powerup-selection-buttons button {
+    background: linear-gradient(45deg, #ff6b9d, #c44569);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.powerup-selection-buttons button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 157, 0.4);
+}
+
+.powerup-selection-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.powerup-selection-buttons #skipPowerup {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.powerup-selection-buttons #skipPowerup:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* Active power-up indicator */
+.active-powerup {
+    position: absolute;
+    top: 32px;
+    right: 190px; /* Position to the left of the power-up inventory */
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #ff6b9d;
+    font-size: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.active-powerup .powerup-icon {
+    font-size: 18px;
+}
+
+.active-powerup .powerup-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.active-powerup .powerup-name {
+    color: #ff9ff3;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.active-powerup .powerup-timer {
+    color: #b0b0b0;
+    font-size: 11px;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -538,6 +787,25 @@ h2 {
         padding: 12px 24px;
         font-size: 14px;
     }
+    
+    /* Active power-up responsive positioning */
+    .active-powerup {
+        right: 160px; /* Adjust for smaller screens */
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    
+    .active-powerup .powerup-icon {
+        font-size: 16px;
+    }
+    
+    .active-powerup .powerup-name {
+        font-size: 12px;
+    }
+    
+    .active-powerup .powerup-timer {
+        font-size: 10px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -558,5 +826,25 @@ h2 {
     
     .progression-text p {
         font-size: 0.9rem;
+    }
+    
+    /* Active power-up responsive positioning for mobile */
+    .active-powerup {
+        right: 10px; /* Stack vertically on mobile */
+        top: 120px; /* Below the power-up inventory */
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+    
+    .active-powerup .powerup-icon {
+        font-size: 14px;
+    }
+    
+    .active-powerup .powerup-name {
+        font-size: 11px;
+    }
+    
+    .active-powerup .powerup-timer {
+        font-size: 9px;
     }
 }

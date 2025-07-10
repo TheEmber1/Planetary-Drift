@@ -1,7 +1,7 @@
 // Game configuration - adjust these values to fine-tune the game
 export const CONFIG = {
     // Physics
-    GRAVITY_STRENGTH: 180000, // Increased from 120000 for much stronger slingshot effect
+    GRAVITY_STRENGTH: 250000, // Increased from 180000 for much stronger gravity effect
     MAX_VELOCITY: 30, // Increased from 25 for more dynamic movement
     BOUNCE_DAMPING: 0.9, // Increased from 0.8 to retain more energy after bounces
     WALL_BOUNCE_DAMPING: 0.9, // Increased for better wall interactions

@@ -10,8 +10,13 @@ export class Physics {
         if (distance > planet.radius + obj.radius) {
             // Calculate gravitational force with strong proximity boost for dramatic slingshots
             const gravityForce = CONFIG.GRAVITY_STRENGTH / (distance * distance);
-            const proximityBoost = distance < 200 ? (200 - distance) / 200 * 1.2 : 0; // Increased from 0.6 to 1.2 for much stronger slingshot effect
-            const enhancedGravity = gravityForce * (1 + proximityBoost);
+            const proximityBoost = distance < 200 ? (200 - distance) / 200 * 1.2 : 0;
+            
+            // Add velocity-based gravity scaling - faster objects get more gravity
+            const currentSpeed = Math.sqrt(obj.velocity.x * obj.velocity.x + obj.velocity.y * obj.velocity.y);
+            const velocityBoost = Math.min(currentSpeed / 15, 2.0); // Scale up to 2x gravity for fast objects
+            
+            const enhancedGravity = gravityForce * (1 + proximityBoost) * (1 + velocityBoost * 0.5);
             
             const angle = Math.atan2(planet.y - obj.y, planet.x - obj.x);
             
@@ -19,7 +24,6 @@ export class Physics {
             obj.velocity.y += Math.sin(angle) * enhancedGravity * deltaTime;
             
             // Limit velocity
-            const currentSpeed = Math.sqrt(obj.velocity.x * obj.velocity.x + obj.velocity.y * obj.velocity.y);
             if (currentSpeed > CONFIG.MAX_VELOCITY) {
                 obj.velocity.x = (obj.velocity.x / currentSpeed) * CONFIG.MAX_VELOCITY;
                 obj.velocity.y = (obj.velocity.y / currentSpeed) * CONFIG.MAX_VELOCITY;
@@ -116,7 +120,12 @@ export class Physics {
                 // Calculate gravitational force with strong proximity boost (same as main physics)
                 const gravityForce = CONFIG.GRAVITY_STRENGTH / (distToPlanet * distToPlanet);
                 const proximityBoost = distToPlanet < 200 ? (200 - distToPlanet) / 200 * 1.2 : 0;
-                const enhancedGravity = gravityForce * (1 + proximityBoost);
+                
+                // Add velocity-based gravity scaling - faster objects get more gravity
+                const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                const velocityBoost = Math.min(currentSpeed / 15, 2.0); // Scale up to 2x gravity for fast objects
+                
+                const enhancedGravity = gravityForce * (1 + proximityBoost) * (1 + velocityBoost * 0.5);
                 
                 const angle = Math.atan2(planet.y - y, planet.x - x);
                 const deltaTime = CONFIG.TRAJECTORY_STEP_SIZE / 60;
@@ -125,7 +134,6 @@ export class Physics {
                 vy += Math.sin(angle) * enhancedGravity * deltaTime;
                 
                 // Limit velocity
-                const currentSpeed = Math.sqrt(vx * vx + vy * vy);
                 if (currentSpeed > CONFIG.MAX_VELOCITY) {
                     vx = (vx / currentSpeed) * CONFIG.MAX_VELOCITY;
                     vy = (vy / currentSpeed) * CONFIG.MAX_VELOCITY;

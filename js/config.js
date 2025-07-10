@@ -76,6 +76,12 @@ export const CONFIG = {
     MAGNET_STRENGTH: 4.0,
     SPLIT_SHOT_COUNT: 3,
     SPLIT_SHOT_ANGLE: 30, // degrees
+    
+    // Particle Effects
+    ORB_COLLECT_PARTICLES: 8, // Number of particles when collecting orb
+    PARTICLE_LIFETIME: 1000, // Particle lifetime in ms
+    PARTICLE_SPEED: 3, // Initial particle speed
+    PARTICLE_FADE_SPEED: 0.02, // How fast particles fade
 };
 
 // Utility functions

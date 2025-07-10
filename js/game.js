@@ -365,7 +365,7 @@ export class Game {
         
         if (this.gameState.hasLaunched) {
             // Handle multiple projectiles (for split shot) or single projectile
-            let anyProjectileBounced = false;
+            let anyMainProjectileBounced = false;
             const currentTime = Date.now();
             
             this.gameState.projectiles.forEach(projectile => {
@@ -379,10 +379,13 @@ export class Game {
                 // Handle wall bounces
                 Physics.handleWallBounces(projectile, this.canvas.width, this.canvas.height);
                 
-                // Handle planet collision - any projectile can trigger bounce count
+                // Handle planet collision - only main projectile can trigger bounce count
                 if (currentTime - this.gameState.lastBounceTime > CONFIG.BOUNCE_COOLDOWN) {
                     if (Physics.handlePlanetBounce(projectile, planet)) {
-                        anyProjectileBounced = true;
+                        // Only count bounce if it's the main projectile (or if there's only one projectile)
+                        if (!projectile.hasOwnProperty('isMainProjectile') || projectile.isMainProjectile) {
+                            anyMainProjectileBounced = true;
+                        }
                     }
                 }
                 
@@ -393,8 +396,8 @@ export class Game {
                 }
             });
             
-            // Update bounce count only once per frame if any projectile bounced
-            if (anyProjectileBounced) {
+            // Update bounce count only if main projectile bounced
+            if (anyMainProjectileBounced) {
                 this.gameState.lastBounceTime = currentTime;
                 this.gameState.reduceBounces();
                 this.updateUI();
@@ -409,12 +412,19 @@ export class Game {
             for (let i = this.gameState.orbs.length - 1; i >= 0; i--) {
                 for (const projectile of this.gameState.projectiles) {
                     if (Physics.checkCollision(projectile, this.gameState.orbs[i])) {
+                        const orb = this.gameState.orbs[i];
+                        // Create particle effect at orb location
+                        this.gameState.createOrbCollectParticles(orb.x, orb.y);
+                        
                         this.gameState.removeOrb(i);
                         this.updateUI();
                         break; // Exit projectile loop since orb is collected
                     }
                 }
             }
+            
+            // Update particles
+            this.gameState.updateParticles(deltaTime);
             
             // Check power-up collection for all projectiles
             this.checkPowerupCollection();
@@ -536,11 +546,8 @@ export class Game {
             // Draw power-ups
             this.renderer.drawPowerups(this.gameState.powerups, time);
             
-            // Draw power-ups
-            this.renderer.drawPowerups(this.gameState.powerups, time);
-            
-            // Draw power-ups
-            this.renderer.drawPowerups(this.gameState.powerups, time);
+            // Draw particles
+            this.renderer.drawParticles(this.gameState.particles);
             
             // Show repositioning instructions if allowed
             if (this.gameState.allowPlanetRepositioning && !this.gameState.hasLaunched && this.gameState.planet) {

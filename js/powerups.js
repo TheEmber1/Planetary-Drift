@@ -25,6 +25,7 @@ export class PowerupSystem {
         this.activePowerup = null;
         this.selectedPowerup = null;
         this.levelPowerup = null; // Track power-up used for current level
+        this.levelPowerupRestored = false; // Track if level power-up was already restored
         this.powerupStartTime = 0;
         
         // Add some test power-ups for demonstration
@@ -152,6 +153,7 @@ export class PowerupSystem {
         if (this.selectedPowerup && this.usePowerup(this.selectedPowerup)) {
             this.activePowerup = this.selectedPowerup;
             this.levelPowerup = this.selectedPowerup; // Remember for level restart
+            this.levelPowerupRestored = false; // Reset restore flag
             this.powerupStartTime = Date.now();
             this.showActivePowerupIndicator();
             console.log(`Power-up activated: ${this.selectedPowerup}`);
@@ -183,11 +185,8 @@ export class PowerupSystem {
             </div>
         `;
 
-        // Add to game container
-        const gameContainer = document.getElementById('gameContainer');
-        if (gameContainer) {
-            gameContainer.appendChild(indicator);
-        }
+        // Add to document body instead of gameContainer
+        document.body.appendChild(indicator);
 
         console.log(`Power-up activated: ${powerupType.name}`);
     }
@@ -213,14 +212,16 @@ export class PowerupSystem {
     // Clear level power-up (when advancing to next level)
     clearLevelPowerup() {
         this.levelPowerup = null;
+        this.levelPowerupRestored = false;
     }
     
     // Restore power-up for level restart
     restoreLevelPowerup() {
-        if (this.levelPowerup) {
+        if (this.levelPowerup && !this.levelPowerupRestored) {
             // Add the power-up back to inventory for restart
             this.addPowerup(this.levelPowerup);
             this.selectedPowerup = this.levelPowerup;
+            this.levelPowerupRestored = true; // Mark as restored to prevent duplicates
             return true;
         }
         return false;

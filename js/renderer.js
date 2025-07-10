@@ -480,4 +480,17 @@ export class Renderer {
         
         this.ctx.globalAlpha = 1.0;
     }
+    
+    // Draw particles
+    drawParticles(particles) {
+        particles.forEach(particle => {
+            this.ctx.save();
+            this.ctx.globalAlpha = particle.alpha;
+            this.ctx.fillStyle = particle.color;
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        });
+    }
 }

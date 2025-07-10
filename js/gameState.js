@@ -30,6 +30,8 @@ export class GameState {
         this.previewOrbs = []; // Orbs shown during planet placement
         this.stars = [];
         this.powerups = []; // Power-ups in current level
+        this.powerupsSpawned = false; // Track if power-ups have been spawned for this level
+        this.particles = []; // Particle effects
         this.currentLevelSeed = null; // Store seed for level restart
         this.pendingPlanet = null; // Planet position while placing
     }
@@ -224,6 +226,7 @@ export class GameState {
         this.planet = null;
         this.pendingPlanet = null;
         this.previewOrbs = [];
+        this.powerupsSpawned = false; // Reset power-up spawn flag
         this.allowPlanetRepositioning = true;
         // Generate orbs immediately so they can be shown during placement
         this.generateInitialOrbs();
@@ -244,6 +247,8 @@ export class GameState {
         this.planet = null;
         this.pendingPlanet = null;
         this.previewOrbs = [];
+        this.particles = []; // Clear particles on restart
+        this.powerupsSpawned = false; // Reset power-up spawn flag
         this.allowPlanetRepositioning = true;
         this.state = 'placing';
         this.generateInitialOrbs();
@@ -263,6 +268,8 @@ export class GameState {
         this.planet = null;
         this.pendingPlanet = null;
         this.previewOrbs = [];
+        this.particles = []; // Clear particles on restart
+        this.powerupsSpawned = false; // Reset power-up spawn flag
         this.allowPlanetRepositioning = true;
         this.state = 'placing';
         // Regenerate orbs with same seed to preserve layout
@@ -284,6 +291,8 @@ export class GameState {
         this.planet = null;
         this.pendingPlanet = null;
         this.previewOrbs = [];
+        this.particles = []; // Clear particles on next level
+        this.powerupsSpawned = false; // Reset power-up spawn flag
         this.allowPlanetRepositioning = true;
         this.state = 'placing';
         this.generateInitialOrbs();
@@ -454,8 +463,11 @@ export class GameState {
                 powerupSystem.activateSelectedPowerup();
             }
             
-            // Spawn power-ups now that planet is placed
-            this.spawnPowerups(canvasWidth, canvasHeight);
+            // Spawn power-ups only once per level
+            if (!this.powerupsSpawned) {
+                this.spawnPowerups(canvasWidth, canvasHeight);
+                this.powerupsSpawned = true;
+            }
         }
     }
     
@@ -511,6 +523,55 @@ export class GameState {
             this.pendingPlanet = { ...this.planet };
             this.planet = null;
             this.spaceshipVisible = false;
+        }
+    }
+    
+    // Create particle effect when orb is collected
+    createOrbCollectParticles(x, y) {
+        const particleCount = CONFIG.ORB_COLLECT_PARTICLES;
+        const colors = ['#ff9ff3', '#ff6b9d', '#c44569', '#ffffff'];
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = CONFIG.PARTICLE_SPEED + Math.random() * CONFIG.PARTICLE_SPEED;
+            
+            const particle = {
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1.0,
+                size: 3 + Math.random() * 2,
+                lifetime: CONFIG.PARTICLE_LIFETIME,
+                age: 0
+            };
+            
+            this.particles.push(particle);
+        }
+    }
+    
+    // Update particles
+    updateParticles(deltaTime) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            
+            // Update position
+            particle.x += particle.vx * deltaTime * 60;
+            particle.y += particle.vy * deltaTime * 60;
+            
+            // Apply drag
+            particle.vx *= 0.98;
+            particle.vy *= 0.98;
+            
+            // Update age and alpha
+            particle.age += deltaTime * 1000;
+            particle.alpha = 1.0 - (particle.age / particle.lifetime);
+            
+            // Remove dead particles
+            if (particle.age >= particle.lifetime || particle.alpha <= 0) {
+                this.particles.splice(i, 1);
+            }
         }
     }
 }
